@@ -1,1 +1,1 @@
-Example pattern for using MTKView with compute shaders in SwiftUI
+Example pattern for using MTKView with Metal compute shaders in SwiftUI
