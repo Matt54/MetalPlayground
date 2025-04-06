@@ -9,5 +9,8 @@
 #define BridgingHeader_h
 
 #include "Shaders/Example1/ExampleShaderParams.h"
+#include "Shaders/Example2/DistanceFieldParams.h"
+#include "Shaders/Example2/ExampleComputeShader1Params.h"
+#include "Shaders/Example2/ExampleComputeShader2Params.h"
 
 #endif /* BridgingHeader_h */
