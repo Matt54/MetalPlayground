@@ -2,3 +2,4 @@
 *.xcbkptlist
 xcuserdata/
 *.xcuserstate
+.DS_Store
