@@ -12,7 +12,7 @@ class ComputeShaderStateManager {
     var shaderDefinition: IsComputeShaderDefinition = ExampleShader1()
     
     /// values that change over time - could be unused (static shader), could be a single phase/time value, or could any number of values changing over time
-    /// each shader definition can define some keys and will bookkeep their values as needed according to
+    /// each shader definition can define some keys and will bookkeep their values as needed
     var runtimeProperties: [String: Any] = [:]
     
     func updateProperties() {
