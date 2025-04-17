@@ -1,2 +1,4 @@
 # Xcode breakpoint files
 *.xcbkptlist
+xcuserdata/
+*.xcuserstate
