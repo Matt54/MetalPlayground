@@ -11,7 +11,7 @@ import SwiftUI
 struct MetalPlaygroundApp: App {
     var body: some Scene {
         WindowGroup {
-            MetalView()
+            MainNavigationView()
         }
     }
 }

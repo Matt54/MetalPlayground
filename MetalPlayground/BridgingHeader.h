@@ -12,5 +12,7 @@
 #include "Shaders/Example2/DistanceFieldParams.h"
 #include "Shaders/Example2/ExampleComputeShader1Params.h"
 #include "Shaders/Example2/ExampleComputeShader2Params.h"
+#include "Shaders/BookOfMetalShaders/ColorPicker/ColorPickerParams.h"
+#include "Shaders/BookOfMetalShaders/SineTransition/SineTransitionParams.h"
 
 #endif /* BridgingHeader_h */

@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol IsComputeShaderDefinition: Codable {
+protocol IsComputeShaderDefinition {
     var functionName: String { get }
     var setByteLength: Int { get }
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T

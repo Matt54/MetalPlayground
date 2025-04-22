@@ -9,7 +9,11 @@ import SwiftUI
 
 @Observable
 class ComputeShaderStateManager {
-    var shaderDefinition: IsComputeShaderDefinition = ExampleShader1()
+    init(shaderDefinition: IsComputeShaderDefinition = ExampleShader1()) {
+        self.shaderDefinition = shaderDefinition
+    }
+    
+    var shaderDefinition: IsComputeShaderDefinition
     
     /// values that change over time - could be unused (static shader), could be a single phase/time value, or could any number of values changing over time
     /// each shader definition can define some keys and will bookkeep their values as needed
