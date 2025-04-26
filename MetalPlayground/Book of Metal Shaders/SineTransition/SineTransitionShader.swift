@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SineTransitionShader: IsComputeShaderDefinition {
+struct SineTransitionShader: IsComputeShaderDefinitionWithParameters {
     var functionName: String = "sineTransition"
     var setByteLength: Int = MemoryLayout<SineTransitionParams>.stride
     var transitionRate: Double = 1.0

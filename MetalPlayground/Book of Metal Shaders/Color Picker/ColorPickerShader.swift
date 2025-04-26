@@ -19,8 +19,8 @@ typealias PlatformColor = NSColor
 extension Color {
     var rgbaSIMD: simd_float4? {
         #if os(macOS)
-        guard let cgColor = PlatformColor(self).cgColor,
-              let components = cgColor.components else {
+        let cgColor = PlatformColor(self).cgColor
+        guard let components = cgColor.components else {
             return nil
         }
 
@@ -46,7 +46,7 @@ private extension Array {
     }
 }
 
-struct ColorPickerShader: IsComputeShaderDefinition {
+struct ColorPickerShader: IsComputeShaderDefinitionWithParameters {
     var functionName: String = "colorPickerShader"
     var setByteLength: Int = MemoryLayout<ColorPickerParams>.stride
     var color: Color = .green

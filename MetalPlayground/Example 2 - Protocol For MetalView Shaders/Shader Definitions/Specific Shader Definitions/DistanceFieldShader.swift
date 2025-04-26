@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct DistanceFieldShader: IsComputeShaderDefinition, Codable {
+struct DistanceFieldShader: IsComputeShaderDefinitionWithParameters, Codable {
     var functionName: String = "distanceField"
     var setByteLength: Int = MemoryLayout<DistanceFieldParams>.stride
     var width: Float = 0.25

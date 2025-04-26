@@ -9,33 +9,34 @@ import SwiftUI
 
 struct MainNavigationView: View {
     @State var navController = NavigationController()
+    @State private var columnVisibility = NavigationSplitViewVisibility.automatic
+    @State private var selectedRoute: Route?
     
     var body: some View {
-        NavigationStack(path: $navController.path) {
-            List {
-                Section(header: Text("Simple Examples")) {
-                    ForEach(simpleExamples) { route in
-                        Button {
-                            navController.push(route.navRoute)
-                        } label: {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            List(selection: $selectedRoute) {
+                Section("Simple Examples") {
+                    ForEach(Self.simpleExamples) { route in
+                        NavigationLink(value: route) {
                             Text(route.title)
+                                .tag(route)
                         }
                     }
                 }
                 
-                Section(header: Text("Book of Metal Shaders")) {
-                    ForEach(bookOfShaderRoutes) { route in
-                        Button {
-                            navController.push(route.navRoute)
-                        } label: {
+                Section("Book of Shaders") {
+                    ForEach(Self.bookOfShaderRoutes) { route in
+                        NavigationLink(value: route) {
                             Text(route.title)
+                                .tag(route)
                         }
                     }
                 }
             }
             .navigationTitle("Metal Playground")
-            .navigationDestination(for: NavigationRoute.self) { navRoute in
-                switch navRoute {
+        } detail: {
+            if let route = selectedRoute {
+                switch route.navRoute {
                 case .example1:
                     MetalView()
                 case .example2:
@@ -46,29 +47,32 @@ struct MainNavigationView: View {
                     ColorPickerMetalView()
                 case .sineTransition:
                     SineTransitionView()
+                case .shapingFunctions:
+                    ShapingFunctionsMetalView()
                 }
+            } else {
+                Text("Select an example")
             }
         }
-        .environment(navController)
     }
     
-    let simpleExamples: [Route] = [
+    let allRoutes: [Route] = simpleExamples + bookOfShaderRoutes
+    
+    static let simpleExamples: [Route] = [
         .init(title: "Basic Cross Platform MetalView",
               navRoute: .example1),
         .init(title: "Protocol-based MetalView",
               navRoute: .example2)
     ]
     
-    let bookOfShaderRoutes: [Route] = [
-        .init(title: "Hello World",
-              navRoute: .helloWorld),
-        .init(title: "Color Picker",
-              navRoute: .colorPicker),
-        .init(title: "Sine Transition",
-              navRoute: .sineTransition)
+    static let bookOfShaderRoutes: [Route] = [
+        .init(title: "Hello World", navRoute: .helloWorld),
+        .init(title: "Color Picker", navRoute: .colorPicker),
+        .init(title: "Sine Transition", navRoute: .sineTransition),
+        .init(title: "Shaping Functions", navRoute: .shapingFunctions)
     ]
-    
-    struct Route: Identifiable {
+
+    struct Route: Identifiable, Hashable {
         let id = UUID()
         let title: String
         let navRoute: NavigationRoute
@@ -88,10 +92,11 @@ class NavigationController {
     }
 }
 
-enum NavigationRoute {
+enum NavigationRoute: CaseIterable {
     case example1
     case example2
     case helloWorld
     case colorPicker
     case sineTransition
+    case shapingFunctions
 }

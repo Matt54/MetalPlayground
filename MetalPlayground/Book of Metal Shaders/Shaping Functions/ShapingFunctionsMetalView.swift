@@ -66,7 +66,7 @@ struct ShapingFunctionsMetalView: View {
                 HStack {
                     Text("Shaping Function: ")
                     Spacer()
-                    Picker("Shader Type", selection: shaderType) {
+                    Picker("", selection: shaderType) {
                         ForEach(ShaderType.allCases, id: \.self) { shader in
                             Text(shader.displayName).tag(shader)
                         }
@@ -74,7 +74,6 @@ struct ShapingFunctionsMetalView: View {
                     .pickerStyle(.menu)
                 }
                 .padding()
-                .background(Color.secondary.opacity(0.1))
                 
                 if let adjustableDefinition = stateManager.shaderDefinition as? AdjustableComputeShaderDefinition {
                     ScrollView {
