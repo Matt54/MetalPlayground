@@ -32,6 +32,8 @@ class ComputeShaderStateManager {
     }
     
     func updateProperties(deltaTime: Double) {
-        shaderDefinition.updateRuntimeProperties(&runtimeProperties, deltaTime: deltaTime)
+        if let shaderDefinition = shaderDefinition as? IsComputeShaderDefinitionWithParameters {
+            shaderDefinition.updateRuntimeProperties(&runtimeProperties, deltaTime: deltaTime)
+        }
     }
 }

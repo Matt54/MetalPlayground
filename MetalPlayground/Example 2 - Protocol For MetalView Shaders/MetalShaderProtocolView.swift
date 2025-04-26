@@ -81,8 +81,10 @@ struct MetalShaderProtocolView: View {
             computeEncoder.setTexture(outTexture, index: 0)
 
             stateManager.updateProperties()
-            stateManager.shaderDefinition.withParameters(stateManager.runtimeProperties) { ptr in
-                computeEncoder.setBytes(ptr, length: stateManager.shaderDefinition.setByteLength, index: 0)
+            if let shaderDefinition = stateManager.shaderDefinition as? IsComputeShaderDefinitionWithParameters {
+                shaderDefinition.withParameters(stateManager.runtimeProperties) { ptr in
+                    computeEncoder.setBytes(ptr, length: shaderDefinition.setByteLength, index: 0)
+                }
             }
             
             // Calculate threadgroup sizes

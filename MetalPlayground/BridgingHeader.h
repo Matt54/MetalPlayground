@@ -14,5 +14,6 @@
 #include "Shaders/Example2/ExampleComputeShader2Params.h"
 #include "Shaders/BookOfMetalShaders/ColorPicker/ColorPickerParams.h"
 #include "Shaders/BookOfMetalShaders/SineTransition/SineTransitionParams.h"
+#include "Shaders/BookOfMetalShaders/ShapingFunctions/ShapingFunctionParams.h"
 
 #endif /* BridgingHeader_h */

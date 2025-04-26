@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ExampleShader2: IsComputeShaderDefinition, Codable {
+struct ExampleShader2: IsComputeShaderDefinitionWithParameters, Codable {
     var functionName: String = "exampleComputeShader2"
     var setByteLength: Int = MemoryLayout<ExampleComputeShader2Params>.stride
     var animationRate: Double = 1.0

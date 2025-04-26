@@ -75,11 +75,6 @@ struct StaticMetalView {
             // Set the output texture
             computeEncoder.setTexture(outTexture, index: 0)
             
-            // Feed in any parameters you need in the shader (using just time here)
-            let currentTime = Date().timeIntervalSince(startTime)
-            var params = ExampleShaderParams(time: Float(currentTime))
-            computeEncoder.setBytes(&params, length: MemoryLayout<ExampleShaderParams>.size, index: 0)
-            
             // Calculate thread group sizes
             let w = computePipeline.threadExecutionWidth
             let h = computePipeline.maxTotalThreadsPerThreadgroup / w
