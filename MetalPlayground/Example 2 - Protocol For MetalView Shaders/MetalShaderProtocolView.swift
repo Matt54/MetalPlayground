@@ -28,9 +28,6 @@ struct MetalShaderProtocolView: View {
     }
     
     private func updateView(_ mtkView: MTKView, context: ViewRepresentableContext<MetalShaderProtocolView>) {
-        // Update the compute pipeline when shader type changes
-        let updateFunction = context.coordinator.library.makeFunction(name: stateManager.shaderDefinition.functionName)!
-        context.coordinator.computePipeline = try! context.coordinator.device.makeComputePipelineState(function: updateFunction)
         context.coordinator.stateManager = stateManager
     }
     
@@ -41,6 +38,7 @@ struct MetalShaderProtocolView: View {
         var computePipeline: MTLComputePipelineState!
         let library: MTLLibrary
         var stateManager: ComputeShaderStateManager
+        private var currentFunctionName: String
         
         init(_ parent: MetalShaderProtocolView) {
             self.parent = parent
@@ -53,6 +51,7 @@ struct MetalShaderProtocolView: View {
             
             let updateFunction = library.makeFunction(name: parent.stateManager.shaderDefinition.functionName)!
             self.computePipeline = try! device.makeComputePipelineState(function: updateFunction)
+            self.currentFunctionName = parent.stateManager.shaderDefinition.functionName
             
             stateManager = parent.stateManager
             
@@ -62,6 +61,14 @@ struct MetalShaderProtocolView: View {
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { }
         
         func draw(in view: MTKView) {
+            // Check if we need to update the pipeline based on current shader
+            let shaderFunction = stateManager.shaderDefinition.functionName
+            if currentFunctionName != shaderFunction {
+                let updateFunction = library.makeFunction(name: shaderFunction)!
+                computePipeline = try! device.makeComputePipelineState(function: updateFunction)
+                currentFunctionName = shaderFunction
+            }
+            
             guard let drawable = view.currentDrawable else {
                 return
             }
