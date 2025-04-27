@@ -8,9 +8,14 @@
 import SwiftUI
 
 struct HelloWorldMetalView: View {
+    @State var stateManager = ComputeShaderStateManager(shaderDefinition: HelloWorldShader())
     var body: some View {
-        StaticMetalView(functionName: "helloWorld")
+        MetalShaderProtocolView(stateManager: stateManager)
     }
+}
+
+struct HelloWorldShader: IsComputeShaderDefinition {
+    var functionName: String = "helloWorld"
 }
 
 #Preview {

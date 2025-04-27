@@ -8,10 +8,14 @@
 import SwiftUI
 
 struct CoordinatesMetalView: View {
+    @State var stateManager = ComputeShaderStateManager(shaderDefinition: CoordinatesShader())
     var body: some View {
-        StaticMetalView(functionName: "coordinates")
-            .aspectRatio(contentMode: .fit)
+        MetalShaderProtocolView(stateManager: stateManager)
     }
+}
+
+struct CoordinatesShader: IsComputeShaderDefinition {
+    var functionName: String = "coordinates"
 }
 
 #Preview {
