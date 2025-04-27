@@ -8,15 +8,14 @@
 import SwiftUI
 
 struct MainNavigationView: View {
-    @State var navController = NavigationController()
     @State private var columnVisibility = NavigationSplitViewVisibility.automatic
-    @State private var selectedRoute: Route?
+    @State private var selectedRoute: NavigationRoute?
     
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: $selectedRoute) {
                 Section("Simple Examples") {
-                    ForEach(Self.simpleExamples) { route in
+                    ForEach(NavigationRoute.simpleExamples) { route in
                         NavigationLink(value: route) {
                             Text(route.title)
                                 .tag(route)
@@ -24,8 +23,8 @@ struct MainNavigationView: View {
                     }
                 }
                 
-                Section("Book of Shaders") {
-                    ForEach(Self.bookOfShaderRoutes) { route in
+                Section("Book of Shaders Examples") {
+                    ForEach(NavigationRoute.bookOfShadersExamples) { route in
                         NavigationLink(value: route) {
                             Text(route.title)
                                 .tag(route)
@@ -36,7 +35,7 @@ struct MainNavigationView: View {
             .navigationTitle("Metal Playground")
         } detail: {
             if let route = selectedRoute {
-                switch route.navRoute {
+                switch route {
                 case .example1:
                     MetalView()
                 case .example2:
@@ -52,51 +51,51 @@ struct MainNavigationView: View {
                 }
             } else {
                 Text("Select an example")
+                    .font(.title)
             }
         }
     }
     
-    let allRoutes: [Route] = simpleExamples + bookOfShaderRoutes
-    
-    static let simpleExamples: [Route] = [
-        .init(title: "Basic Cross Platform MetalView",
-              navRoute: .example1),
-        .init(title: "Protocol-based MetalView",
-              navRoute: .example2)
-    ]
-    
-    static let bookOfShaderRoutes: [Route] = [
-        .init(title: "Hello World", navRoute: .helloWorld),
-        .init(title: "Color Picker", navRoute: .colorPicker),
-        .init(title: "Sine Transition", navRoute: .sineTransition),
-        .init(title: "Shaping Functions", navRoute: .shapingFunctions)
-    ]
-
-    struct Route: Identifiable, Hashable {
-        let id = UUID()
-        let title: String
-        let navRoute: NavigationRoute
+    enum NavigationRoute: String, CaseIterable, Identifiable {
+        case example1
+        case example2
+        case helloWorld
+        case colorPicker
+        case sineTransition
+        case shapingFunctions
+        
+        var title: String {
+            switch self {
+            case .example1:
+                "Basic Cross Platform MetalView"
+            case .example2:
+                "Protocol-based MetalView"
+            case .helloWorld:
+                "Hello World"
+            case .colorPicker:
+                "Color Picker"
+            case .sineTransition:
+                "Sine Transition"
+            case .shapingFunctions:
+                "Shaping Functions"
+            }
+        }
+        
+        var id: String { rawValue }
+        
+        static let simpleExamples: [NavigationRoute] = [
+            .example1,
+            .example2
+        ]
+        static let bookOfShadersExamples: [NavigationRoute] = [
+            .helloWorld,
+            .colorPicker,
+            .sineTransition,
+            .shapingFunctions
+        ]
     }
 }
 
 #Preview {
     MainNavigationView()
-}
-
-@Observable
-class NavigationController {
-    var path: [NavigationRoute] = []
-    
-    func push(_ route: NavigationRoute) {
-        path.append(route)
-    }
-}
-
-enum NavigationRoute: CaseIterable {
-    case example1
-    case example2
-    case helloWorld
-    case colorPicker
-    case sineTransition
-    case shapingFunctions
 }
