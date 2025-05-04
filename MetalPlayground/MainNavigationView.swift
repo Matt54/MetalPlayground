@@ -50,6 +50,8 @@ struct MainNavigationView: View {
                     ShapingFunctionsMetalView()
                 case .colorGradient:
                     ColorGradientMetalView()
+                case .polarGradient:
+                    PolarColorGradientView()
                 }
             } else {
                 Text("Select an example")
@@ -66,6 +68,7 @@ struct MainNavigationView: View {
         case sineTransition
         case shapingFunctions
         case colorGradient
+        case polarGradient
         
         var title: String {
             switch self {
@@ -83,6 +86,8 @@ struct MainNavigationView: View {
                 "Shaping Functions"
             case .colorGradient:
                 "Color Gradient"
+            case .polarGradient:
+                "Polar Gradient"
             }
         }
         
@@ -97,7 +102,8 @@ struct MainNavigationView: View {
             .colorPicker,
             .sineTransition,
             .shapingFunctions,
-            .colorGradient
+            .colorGradient,
+            .polarGradient,
         ]
     }
 }

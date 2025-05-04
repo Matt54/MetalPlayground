@@ -1,0 +1,19 @@
+//
+//  SDFPrimitive.h
+//  MetalPlayground
+//
+//  Created by Matt Pfeiffer on 5/4/25.
+//
+
+enum SDFPrimitive {
+    Circle = 0,
+    Box = 1,
+    Triangle = 2,
+    RoundedBox = 3,
+    RegularPolygon = 4,
+    Line = 5,
+    Capsule = 6,
+    Ellipse = 7,
+    Cross = 8,
+    Star = 9
+};

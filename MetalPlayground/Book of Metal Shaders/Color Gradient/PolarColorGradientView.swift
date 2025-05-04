@@ -17,6 +17,8 @@ struct PolarColorGradientView: View {
     var body: some View {
         VStack {
             MetalShaderProtocolView(stateManager: stateManager)
+                .aspectRatio(1.0, contentMode: .fit)
+                .clipShape(Circle())
         }
     }
 }
