@@ -17,7 +17,7 @@ enum SDFShape: Int, CaseIterable {
     case capsule = 6
     case ellipse = 7
     case cross = 8
-    case star = 9
+    case pentagram = 9
     
     var metalShape: SDFPrimitive {
         SDFPrimitive(rawValue: UInt32(self.rawValue))
@@ -38,7 +38,7 @@ enum SDFShape: Int, CaseIterable {
         case .capsule: return "Capsule"
         case .ellipse: return "Ellipse"
         case .cross: return "Cross"
-        case .star: return "Star"
+        case .pentagram: return "Pentagram"
         }
     }
     
@@ -53,7 +53,7 @@ enum SDFShape: Int, CaseIterable {
         case .capsule: return "A line with rounded ends"
         case .ellipse: return "A stretched circle"
         case .cross: return "Two intersecting rectangles"
-        case .star: return "A five-pointed star"
+        case .pentagram: return "A five-pointed pentagram"
         }
     }
 }
@@ -64,12 +64,19 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
     var shouldMask: Bool = false
     var selectedShape: SDFShape = .circle
     var intensity: Float = 1.0
+    var repetitionsX: Float = 4.0
+    var repetitionsY: Float = 4.0
+    var shouldFlipAlternating: Bool = false
+    var rotation: Float = 0.0  // Add rotation parameter (in radians)
 
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T {
         var params = SDFParams(
             shouldMask: shouldMask ? 1 : 0,
             shape: selectedShape.metalShape,
-            intensity: intensity
+            intensity: intensity,
+            repetitions: SIMD2<Float>(repetitionsX, repetitionsY),
+            shouldFlipAlternating: shouldFlipAlternating ? 1 : 0,
+            rotation: rotation
         )
         return withUnsafePointer(to: &params) {
             body(UnsafeRawPointer($0))
@@ -111,7 +118,28 @@ struct SDFShaderAdjustmentView: View {
                 Text("Intensity: ")
                 Slider(value: $shader.intensity, in: 0...1, step: 0.01)
             }
-                
+            
+            Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
+            
+            HStack {
+                Text("X Repetitions: ")
+                Slider(value: $shader.repetitionsX, in: 1...10, step: 1)
+                Text("\(Int(shader.repetitionsX))")
+            }
+            
+            HStack {
+                Text("Y Repetitions: ")
+                Slider(value: $shader.repetitionsY, in: 1...10, step: 1)
+                Text("\(Int(shader.repetitionsY))")
+            }
+            
+            HStack {
+                Text("Rotation: ")
+                Slider(value: $shader.rotation, 
+                       in: 0...(2 * Float.pi),  // Full 360 degree rotation
+                       step: 0.01)
+                Text("\(Int(shader.rotation * 180 / Float.pi))°") // Show in degrees
+            }
         }
         .padding(.horizontal)
     }

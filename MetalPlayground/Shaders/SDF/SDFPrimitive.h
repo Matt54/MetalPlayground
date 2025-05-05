@@ -15,5 +15,5 @@ enum SDFPrimitive {
     Capsule = 6,
     Ellipse = 7,
     Cross = 8,
-    Star = 9
+    Pentagram = 9
 };

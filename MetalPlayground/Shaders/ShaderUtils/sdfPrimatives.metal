@@ -42,16 +42,15 @@ inline float sdfRoundedBox(float2 position, float2 halfSize, float cornerRadius)
     return length(max(distanceFromCenter, 0.0)) + min(max(distanceFromCenter.x, distanceFromCenter.y), 0.0) - cornerRadius;
 }
 
-// Regular Polygon
-inline float sdfRegularPolygon(float2 position, float radius, int sides) {
-    float angleFromCenter = atan2(position.y, position.x);
-    float segmentAngle = 2.0 * M_PI_F / float(sides);
+// Regular Hexagon
+inline float sdfHexagon(float2 position, float radius) {
+    const float3 k = float3(-0.866025404, 0.5, 0.577350269);  // (-sqrt(3)/2, 1/2, 1/sqrt(3))
     
-    angleFromCenter = fmod(angleFromCenter, segmentAngle) - segmentAngle/2.0;
-    float distanceFromCenter = length(position);
-    float2 rotatedPosition = distanceFromCenter * float2(cos(angleFromCenter), sin(angleFromCenter));
+    float2 p = abs(position);
+    p -= 2.0 * min(dot(k.xy, p), 0.0) * k.xy;
+    p -= float2(clamp(p.x, -k.z * radius, k.z * radius), radius);
     
-    return rotatedPosition.x - radius * cos(segmentAngle/2.0);
+    return length(p) * sign(p.y);
 }
 
 // Line Segment
@@ -77,26 +76,46 @@ inline float sdfEllipse(float2 position, float2 radii) {
     return (scaleFactor - 1.0) * min(radii.x, radii.y);
 }
 
-// Cross
-inline float sdfCross(float2 position, float2 dimensions) {
-    float2 distanceFromCenter = abs(position);
-    return min(distanceFromCenter.x - dimensions.y, distanceFromCenter.y - dimensions.x);
+// Cross with rounded corners
+inline float sdfCross(float2 position, float2 size, float cornerRadius) {
+    // Take absolute value to handle symmetry
+    float2 p = abs(position);
+    
+    // Swap if y > x to handle both orientations
+    if (p.y > p.x) {
+        p = p.yx;
+    }
+    
+    // Calculate distance to the cross shape
+    float2 distanceToEdge = p - size;
+    float maxDistance = max(distanceToEdge.y, distanceToEdge.x);
+    
+    // Handle the corner regions
+    float2 cornerDistance = (maxDistance > 0.0) ? distanceToEdge : float2(size.y - p.x, -maxDistance);
+    
+    return sign(maxDistance) * length(max(cornerDistance, 0.0)) + cornerRadius;
 }
 
-// Regular Star
-inline float sdfStar(float2 position, float outerRadius, float innerRadius, int points) {
-    float angleFromCenter = atan2(position.y, position.x);
-    float segmentAngle = M_PI_F / float(points);
+// Pentagram
+inline float sdfPentagram(float2 position, float radius) {
+    // Constants for pentagram geometry
+    const float k1x = 0.809016994;  // cos(π/5)
+    const float k2x = 0.309016994;  // sin(π/10)
+    const float k1y = 0.587785252;  // sin(π/5)
+    const float k2y = 0.951056516;  // cos(π/10)
+    const float k1z = 0.726542528;  // tan(π/5)
     
-    angleFromCenter = fmod(angleFromCenter, 2.0 * segmentAngle) - segmentAngle;
-    float distanceFromCenter = length(position);
-    float2 rotatedPosition = distanceFromCenter * float2(cos(angleFromCenter), sin(angleFromCenter));
+    const float2 v1 = float2(k1x, -k1y);
+    const float2 v2 = float2(-k1x, -k1y);
+    const float2 v3 = float2(k2x, -k2y);
     
-    float2 outerPoint = float2(outerRadius * cos(segmentAngle), outerRadius * sin(segmentAngle));
-    float2 innerPoint = float2(innerRadius, 0.0);
+    float2 p = position;
+    p.x = abs(p.x);
+    p -= 2.0 * max(dot(v1, p), 0.0) * v1;
+    p -= 2.0 * max(dot(v2, p), 0.0) * v2;
+    p.x = abs(p.x);
+    p.y -= radius;
     
-    float distanceToOuter = length(rotatedPosition - outerPoint);
-    float distanceToInner = length(rotatedPosition - innerPoint);
-    
-    return min(distanceToOuter, distanceToInner);
+    float2 closestPoint = v3 * clamp(dot(p, v3), 0.0, k1z * radius);
+    return length(p - closestPoint) * sign(p.y * v3.x - p.x * v3.y);
 }
