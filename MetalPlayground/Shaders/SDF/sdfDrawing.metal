@@ -20,9 +20,14 @@ inline float2 rotate2D(float2 p, float angle) {
 }
 
 inline float2 createRepetitionPattern(float2 coords, float2 repetitions, bool shouldFlip) {
-    // if (all(repetitions == float2(1.0))) {
-    //     return coords;
-    // }
+    // For odd repetitions, we want to center the pattern
+    float2 offset = float2(
+        fmod(repetitions.x, 2.0) != 0.0 ? 0.5/repetitions.x : 0.0,
+        fmod(repetitions.y, 2.0) != 0.0 ? 0.5/repetitions.y : 0.0
+    );
+    
+    // Apply offset to input coordinates before scaling
+    coords += offset;
     
     // Scale up coordinates to create multiple repetitions
     float2 scaled = coords * repetitions;
@@ -85,9 +90,7 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
     float2 coordinates = getCenteredCoordinates(pixelCoord, destination);
     
     // Create repetition pattern
-    if (all(params.repetitions != float2(1.0))) {
-        coordinates = createRepetitionPattern(coordinates, params.repetitions, params.shouldFlipAlternating != 0);
-    }
+    coordinates = createRepetitionPattern(coordinates, params.repetitions, params.shouldFlipAlternating != 0);
     
     // Apply rotation after pattern creation
     coordinates = rotate2D(coordinates, params.rotation);
