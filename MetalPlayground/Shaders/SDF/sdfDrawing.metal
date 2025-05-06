@@ -82,6 +82,14 @@ inline float getSDFValue(float2 centeredCoords, enum SDFPrimitive shape) {
     }
 }
 
+// Polynomial smooth minimum function for SDF blending
+// k controls the size of the blending region:
+// This preserves the distance field properties better than regular interpolation
+inline float smoothMin(float a, float b, float k) {
+    float h = max(k - abs(a - b), 0.0) / k;
+    return min(a, b) - h * h * k * 0.25;
+}
+
 kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]],
                        constant SDFParams& params [[buffer(0)]],
                        uint2 pixelCoord [[thread_position_in_grid]])
@@ -92,18 +100,37 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
     // Create repetition pattern
     coordinates = createRepetitionPattern(coordinates, params.repetitions, params.shouldFlipAlternating != 0);
     
-    // Apply rotation after pattern creation
+    // Calculate SDF for current tile
     coordinates = rotate2D(coordinates, params.rotation);
+    float currentSDF = getSDFValue(coordinates, params.shape);
     
-    // Get SDF value from the new function
-    float sdf = getSDFValue(coordinates, params.shape);
+    float finalSDF = currentSDF;
     
-    // 0 outside, 1.0 inside
-    float mask = params.intensity - step(0.0, sdf);
-    if (!params.shouldMask) {
-         mask = params.intensity-sdf;
+    // Blend with neighboring tiles if blending is enabled
+    // This creates a smooth transition between tiles, making them "bleed" into each other
+    // The blendK parameter controls the amount of bleeding:
+    // - blendK = 0: No bleeding, tiles remain separate
+    // - blendK > 0: Tiles blend together, with larger values creating more bleeding
+    if (params.blendK > 0.0) {
+        // Sample all 8 neighboring tiles in a 3x3 grid
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) continue; // Skip the current tile
+                
+                // Calculate the SDF value for this neighbor
+                float2 neighborLocal = coordinates - float2(dx, dy);
+                float2 neighborRotated = rotate2D(neighborLocal, params.rotation);
+                float neighborSDF = getSDFValue(neighborRotated, params.shape);
+                
+                // Blend the neighbor's SDF with our current result
+                finalSDF = smoothMin(finalSDF, neighborSDF, params.blendK);
+            }
+        }
     }
     
-    float3 color = float3(mask);                   // White outside, black inside
+    // Apply final mask
+    float mask = params.intensity - (params.shouldMask ? step(0.0, finalSDF) : finalSDF);
+    
+    float3 color = float3(mask);
     destination.write(half4(half3(color), 1.0), pixelCoord);
 }

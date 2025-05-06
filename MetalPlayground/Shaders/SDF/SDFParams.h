@@ -10,4 +10,5 @@ struct SDFParams {
     simd_float2 repetitions;    // Changed from float2 to simd_float2
     int shouldFlipAlternating;   // Add this new parameter
     float rotation;    // Add rotation in radians
+    float blendK;     // Add blend factor parameter
 };

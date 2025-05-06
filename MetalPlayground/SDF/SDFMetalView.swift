@@ -67,7 +67,8 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
     var repetitionsX: Float = 4.0
     var repetitionsY: Float = 4.0
     var shouldFlipAlternating: Bool = false
-    var rotation: Float = 0.0  // Add rotation parameter (in radians)
+    var rotation: Float = 0.0
+    var blendK: Float = 0.0     // Add blend factor with default 0 (no blending)
 
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T {
         var params = SDFParams(
@@ -76,7 +77,8 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
             intensity: intensity,
             repetitions: SIMD2<Float>(repetitionsX, repetitionsY),
             shouldFlipAlternating: shouldFlipAlternating ? 1 : 0,
-            rotation: rotation
+            rotation: rotation,
+            blendK: blendK       // Add blend factor to params
         )
         return withUnsafePointer(to: &params) {
             body(UnsafeRawPointer($0))
@@ -100,48 +102,56 @@ struct SDFShaderAdjustmentView: View {
     @Binding var shader: SDFShader
     
     var body: some View {
-        VStack(spacing: 24) {
-            HStack {
-                Text("SDF Function")
-                Spacer()
-                Picker("", selection: $shader.selectedShape) {
-                    ForEach(SDFShape.allCases, id: \.self) { shape in
-                        Text(shape.displayName).tag(shape)
+        ScrollView {
+            VStack(spacing: 24) {
+                HStack {
+                    Text("SDF Function")
+                    Spacer()
+                    Picker("", selection: $shader.selectedShape) {
+                        ForEach(SDFShape.allCases, id: \.self) { shape in
+                            Text(shape.displayName).tag(shape)
+                        }
                     }
+                    .pickerStyle(.menu)
                 }
-                .pickerStyle(.menu)
+                
+                Toggle("Enable Masking", isOn: $shader.shouldMask)
+                
+                HStack {
+                    Text("Intensity: ")
+                    Slider(value: $shader.intensity, in: 0...1, step: 0.01)
+                }
+                
+                Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
+                
+                HStack {
+                    Text("X Repetitions: ")
+                    Slider(value: $shader.repetitionsX, in: 1...20, step: 1)
+                    Text("\(Int(shader.repetitionsX))")
+                }
+                
+                HStack {
+                    Text("Y Repetitions: ")
+                    Slider(value: $shader.repetitionsY, in: 1...20, step: 1)
+                    Text("\(Int(shader.repetitionsY))")
+                }
+                
+                HStack {
+                    Text("Rotation: ")
+                    Slider(value: $shader.rotation,
+                           in: 0...(2 * Float.pi),  // Full 360 degree rotation
+                           step: 0.01)
+                    Text("\(Int(shader.rotation * 180 / Float.pi))°") // Show in degrees
+                }
+                
+                HStack {
+                    Text("Blend Amount: ")
+                    Slider(value: $shader.blendK, in: 0...0.5, step: 0.01)
+                    Text(String(format: "%.2f", shader.blendK))
+                }
             }
-            
-            Toggle("Enable Masking", isOn: $shader.shouldMask)
-            
-            HStack {
-                Text("Intensity: ")
-                Slider(value: $shader.intensity, in: 0...1, step: 0.01)
-            }
-            
-            Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
-            
-            HStack {
-                Text("X Repetitions: ")
-                Slider(value: $shader.repetitionsX, in: 1...10, step: 1)
-                Text("\(Int(shader.repetitionsX))")
-            }
-            
-            HStack {
-                Text("Y Repetitions: ")
-                Slider(value: $shader.repetitionsY, in: 1...10, step: 1)
-                Text("\(Int(shader.repetitionsY))")
-            }
-            
-            HStack {
-                Text("Rotation: ")
-                Slider(value: $shader.rotation, 
-                       in: 0...(2 * Float.pi),  // Full 360 degree rotation
-                       step: 0.01)
-                Text("\(Int(shader.rotation * 180 / Float.pi))°") // Show in degrees
-            }
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
 }
 
