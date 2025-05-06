@@ -23,10 +23,6 @@ enum SDFShape: Int, CaseIterable {
         SDFPrimitive(rawValue: UInt32(self.rawValue))
     }
     
-    var metalValue: Int32 {
-        Int32(rawValue)
-    }
-    
     var displayName: String {
         switch self {
         case .circle: return "Circle"
@@ -49,10 +45,12 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
     var shouldMask: Bool = false
     var selectedShape: SDFShape = .circle
     var intensity: Float = 1.0
-    var repetitions: Float = 4.0
+    var repetitions: Float = 1.0
     var shouldFlipAlternating: Bool = false
     var rotation: Float = 0.0
-    var blendK: Float = 0.0     // Add blend factor with default 0 (no blending)
+    var blendK: Float = 0.0
+    var isRotating: Bool = false
+    var rotationSpeed: Float = 1.0
 
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T {
         var params = SDFParams(
@@ -61,15 +59,24 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
             intensity: intensity,
             repetitions: SIMD2<Float>(repetitions, repetitions),
             shouldFlipAlternating: shouldFlipAlternating ? 1 : 0,
-            rotation: rotation,
-            blendK: blendK       // Add blend factor to params
+            rotation: rotation + (properties["autoRotateAmount"] as? Float ?? 0),
+            blendK: blendK
         )
         return withUnsafePointer(to: &params) {
             body(UnsafeRawPointer($0))
         }
     }
     
-    func updateRuntimeProperties(_ properties: inout [String: Any], deltaTime: Double) { }
+    func updateRuntimeProperties(_ properties: inout [String: Any], deltaTime: Double) {
+        if isRotating {
+            if var autoRotateAmount = properties["autoRotateAmount"] as? Float {
+                autoRotateAmount +=  Float(deltaTime) * rotationSpeed
+                properties["autoRotateAmount"] = autoRotateAmount
+            } else {
+                properties["autoRotateAmount"] = rotationSpeed * Float(deltaTime)
+            }
+        }
+    }
 }
 
 extension SDFShader: AdjustableComputeShaderDefinition {
@@ -115,21 +122,32 @@ struct SDFShaderAdjustmentView: View {
                 }
                 
                 HStack {
-                    Text("Rotation: ")
-                    Slider(value: $shader.rotation,
-                           in: 0...(2 * Float.pi),  // Full 360 degree rotation
-                           step: 0.01)
-                    Text("\(Int(shader.rotation * 180 / Float.pi))°") // Show in degrees
-                }
-                
-                HStack {
                     Text("Blend Amount: ")
-                    Slider(value: $shader.blendK, in: 0...0.5, step: 0.01)
+                    Slider(value: $shader.blendK, in: 0...1.0, step: 0.01)
                     Text(String(format: "%.2f", shader.blendK))
+                }
+
+                HStack(spacing: 24) {
+                    Toggle("Auto Rotate", isOn: $shader.isRotating)
+                        .frame(width: 150)
+                    Spacer()
+                    
+                    if shader.isRotating {
+                        Text("Speed: ")
+                        Slider(value: $shader.rotationSpeed, in: 0...3, step: 0.025)
+                        Text(String(format: "%.1f", shader.rotationSpeed))
+                    } else {
+                        Text("Rotation: ")
+                        Slider(value: $shader.rotation,
+                               in: 0...(2 * Float.pi),  // Full 360 degree rotation
+                               step: 0.01)
+                        Text("\(Int(shader.rotation * 180 / Float.pi))°") // Show in degrees
+                    }
                 }
             }
             .padding(.horizontal)
         }
+        .frame(height: 370)
     }
 }
 
