@@ -49,8 +49,7 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
     var shouldMask: Bool = false
     var selectedShape: SDFShape = .circle
     var intensity: Float = 1.0
-    var repetitionsX: Float = 4.0
-    var repetitionsY: Float = 4.0
+    var repetitions: Float = 4.0
     var shouldFlipAlternating: Bool = false
     var rotation: Float = 0.0
     var blendK: Float = 0.0     // Add blend factor with default 0 (no blending)
@@ -60,7 +59,7 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
             shouldMask: shouldMask ? 1 : 0,
             shape: selectedShape.metalShape,
             intensity: intensity,
-            repetitions: SIMD2<Float>(repetitionsX, repetitionsY),
+            repetitions: SIMD2<Float>(repetitions, repetitions),
             shouldFlipAlternating: shouldFlipAlternating ? 1 : 0,
             rotation: rotation,
             blendK: blendK       // Add blend factor to params
@@ -110,15 +109,9 @@ struct SDFShaderAdjustmentView: View {
                 Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
                 
                 HStack {
-                    Text("X Repetitions: ")
-                    Slider(value: $shader.repetitionsX, in: 1...20, step: 1)
-                    Text("\(Int(shader.repetitionsX))")
-                }
-                
-                HStack {
-                    Text("Y Repetitions: ")
-                    Slider(value: $shader.repetitionsY, in: 1...20, step: 1)
-                    Text("\(Int(shader.repetitionsY))")
+                    Text("Repetitions: ")
+                    Slider(value: $shader.repetitions, in: 1...20, step: 1)
+                    Text("\(Int(shader.repetitions))")
                 }
                 
                 HStack {
