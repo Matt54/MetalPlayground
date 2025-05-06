@@ -5,10 +5,10 @@
 
 struct SDFParams {
     int shouldMask;
-    enum SDFPrimitive shape;     // Need 'enum' keyword in C/Metal
+    enum SDFPrimitive shape;
     float intensity;
-    simd_float2 repetitions;    // Changed from float2 to simd_float2
-    int shouldFlipAlternating;   // Add this new parameter
-    float rotation;    // Add rotation in radians
-    float blendK;     // Add blend factor parameter
+    simd_float2 repetitions;
+    int shouldFlipAlternating;
+    float rotation;
+    float blendK;
 };

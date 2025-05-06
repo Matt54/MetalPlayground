@@ -41,21 +41,6 @@ enum SDFShape: Int, CaseIterable {
         case .pentagram: return "Pentagram"
         }
     }
-    
-    var description: String {
-        switch self {
-        case .circle: return "A perfect circle"
-        case .box: return "A rectangular shape"
-        case .triangle: return "An equilateral triangle"
-        case .roundedBox: return "A rectangle with rounded corners"
-        case .regularPolygon: return "A regular hexagon"
-        case .line: return "A diagonal line with thickness"
-        case .capsule: return "A line with rounded ends"
-        case .ellipse: return "A stretched circle"
-        case .cross: return "Two intersecting rectangles"
-        case .pentagram: return "A five-pointed pentagram"
-        }
-    }
 }
 
 struct SDFShader: IsComputeShaderDefinitionWithParameters {

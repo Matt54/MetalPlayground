@@ -12,7 +12,6 @@ using namespace metal;
 #include "../ShaderUtils/ShaderUtils.metal"
 #include "../ShaderUtils/sdfPrimatives.metal"
 
-// Add a rotation helper function
 inline float2 rotate2D(float2 p, float angle) {
     float s = sin(angle);
     float c = cos(angle);
