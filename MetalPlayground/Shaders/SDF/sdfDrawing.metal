@@ -78,6 +78,10 @@ inline float getSDFValue(float2 centeredCoords, enum SDFPrimitive shape) {
             return sdfCross(centeredCoords, float2(0.25, 0.0625), 0.0125);
         case Pentagram:
             return sdfPentagram(centeredCoords, 0.25);
+        case UnevenCapsule:
+            return sdfUnevenCapsule(centeredCoords, 0.1, 0.05, 0.3);
+        case Heart:
+            return sdfHeart(centeredCoords, 0.25);
     }
 }
 

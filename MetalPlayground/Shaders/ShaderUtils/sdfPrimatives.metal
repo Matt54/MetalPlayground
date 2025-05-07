@@ -119,3 +119,44 @@ inline float sdfPentagram(float2 position, float radius) {
     float2 closestPoint = v3 * clamp(dot(p, v3), 0.0, k1z * radius);
     return length(p - closestPoint) * sign(p.y * v3.x - p.x * v3.y);
 }
+
+// Uneven Capsule
+inline float sdfUnevenCapsule(float2 position, float radius1, float radius2, float height) {
+    position.x = abs(position.x);
+    float b = (radius1 - radius2) / height;
+    float a = sqrt(1.0 - b * b);
+    float k = dot(position, float2(-b, a));
+    
+    if (k < 0.0) {
+        return length(position) - radius1;
+    }
+    if (k > a * height) {
+        return length(position - float2(0.0, height)) - radius2;
+    }
+    return dot(position, float2(a, b)) - radius1;
+}
+
+// Heart
+inline float sdfHeart(float2 position, float size) {
+    // Scale and center the position
+    position = position / size;
+    
+    // Take absolute of x for symmetry
+    float2 p = position;
+    p.x = abs(p.x);
+    
+    // Check if we're in the top part of the heart
+    if (p.y + p.x > 1.0) {
+        // Top circular parts
+        return (length(p - float2(0.25, 0.75)) - sqrt(2.0)/4.0) * size;
+    }
+    
+    // Bottom part of the heart
+    float2 maxPoint = 0.5 * max(p.x + p.y, 0.0);
+    float d = min(
+        length(p - float2(0.0, 1.0)),
+        length(p - maxPoint)
+    );
+    
+    return d * sign(p.x - p.y) * size;
+}

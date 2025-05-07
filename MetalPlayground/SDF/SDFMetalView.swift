@@ -18,6 +18,8 @@ enum SDFShape: Int, CaseIterable {
     case ellipse = 7
     case cross = 8
     case pentagram = 9
+    case unevenCapsule = 10
+    case heart = 11
     
     var metalShape: SDFPrimitive {
         SDFPrimitive(rawValue: UInt32(self.rawValue))
@@ -35,6 +37,8 @@ enum SDFShape: Int, CaseIterable {
         case .ellipse: return "Ellipse"
         case .cross: return "Cross"
         case .pentagram: return "Pentagram"
+        case .unevenCapsule: return "Uneven Capsule"
+        case .heart: return "Heart"
         }
     }
 }
