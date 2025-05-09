@@ -47,6 +47,7 @@ inline float2 createRepetitionPattern(float2 coords, float2 repetitions, bool sh
     return local;
 }
 
+// centered at (0, 0) with a range of (-0.5, 0.5)
 inline float2 getCenteredCoordinates(uint2 pixelCoord, texture2d<half, access::write> texture) {
     float width = texture.get_width();
     float height = texture.get_height();
@@ -82,6 +83,10 @@ inline float getSDFValue(float2 centeredCoords, enum SDFPrimitive shape) {
             return sdfUnevenCapsule(centeredCoords, 0.1, 0.05, 0.3);
         case Heart:
             return sdfHeart(centeredCoords, 0.25);
+        case Pie:
+            // Using a 90-degree aperture as default (π/4 radians)
+            float2 aperture = float2(cos(M_PI_F/4), sin(M_PI_F/4));
+            return sdfPie(centeredCoords, aperture, 0.25);
     }
 }
 
@@ -97,11 +102,15 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
                        constant SDFParams& params [[buffer(0)]],
                        uint2 pixelCoord [[thread_position_in_grid]])
 {
-    // Get base coordinates centered at (0, 0)
+    // Get base coordinates centered at (0, 0) with a range of (-0.5, 0.5)
     float2 coordinates = getCenteredCoordinates(pixelCoord, destination);
     
     // Create repetition pattern
     coordinates = createRepetitionPattern(coordinates, params.repetitions, params.shouldFlipAlternating != 0);
+    
+    float scaleFactor = 0.5 / params.scale;
+    
+    coordinates = coordinates * scaleFactor;
     
     // Calculate SDF for current tile
     coordinates = rotate2D(coordinates, params.rotation);
@@ -111,9 +120,7 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
     
     // Blend with neighboring tiles if blending is enabled
     // This creates a smooth transition between tiles, making them "bleed" into each other
-    // The blendK parameter controls the amount of bleeding:
-    // - blendK = 0: No bleeding, tiles remain separate
-    // - blendK > 0: Tiles blend together, with larger values creating more bleeding
+    // blendK is amount of bleeding (0 = none, increase for blending):
     if (params.blendK > 0.0) {
         // Sample all 8 neighboring tiles in a 3x3 grid
         for (int dx = -1; dx <= 1; dx++) {
@@ -121,7 +128,7 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
                 if (dx == 0 && dy == 0) continue; // Skip the current tile
                 
                 // Calculate the SDF value for this neighbor
-                float2 neighborLocal = coordinates - float2(dx, dy);
+                float2 neighborLocal = coordinates - float2(dx, dy) * scaleFactor;
                 float2 neighborRotated = rotate2D(neighborLocal, params.rotation);
                 float neighborSDF = getSDFValue(neighborRotated, params.shape);
                 

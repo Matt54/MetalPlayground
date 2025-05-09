@@ -11,4 +11,5 @@ struct SDFParams {
     int shouldFlipAlternating;
     float rotation;
     float blendK;
+    float scale;
 };

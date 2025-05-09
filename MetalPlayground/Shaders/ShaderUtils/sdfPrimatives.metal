@@ -160,3 +160,11 @@ inline float sdfHeart(float2 position, float size) {
     
     return d * sign(p.x - p.y) * size;
 }
+
+// Pie shape
+inline float sdfPie(float2 position, float2 aperture, float radius) {
+    position.x = abs(position.x);
+    float l = length(position) - radius;
+    float m = length(position - aperture * clamp(dot(position, aperture), 0.0, radius));
+    return max(l, m * sign(aperture.y * position.x - aperture.x * position.y));
+}

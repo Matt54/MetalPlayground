@@ -20,6 +20,7 @@ enum SDFShape: Int, CaseIterable {
     case pentagram = 9
     case unevenCapsule = 10
     case heart = 11
+    case pie = 12
     
     var metalShape: SDFPrimitive {
         SDFPrimitive(rawValue: UInt32(self.rawValue))
@@ -39,6 +40,7 @@ enum SDFShape: Int, CaseIterable {
         case .pentagram: return "Pentagram"
         case .unevenCapsule: return "Uneven Capsule"
         case .heart: return "Heart"
+        case .pie: return "Pie"
         }
     }
 }
@@ -55,6 +57,7 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
     var blendK: Float = 0.0
     var isRotating: Bool = false
     var rotationSpeed: Float = 1.0
+    var scale: Float = 0.5
 
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T {
         var params = SDFParams(
@@ -64,7 +67,8 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
             repetitions: SIMD2<Float>(repetitions, repetitions),
             shouldFlipAlternating: shouldFlipAlternating ? 1 : 0,
             rotation: rotation + (properties["autoRotateAmount"] as? Float ?? 0),
-            blendK: blendK
+            blendK: blendK,
+            scale: scale,
         )
         return withUnsafePointer(to: &params) {
             body(UnsafeRawPointer($0))
@@ -113,6 +117,11 @@ struct SDFShaderAdjustmentView: View {
                 Toggle("Enable Masking", isOn: $shader.shouldMask)
                 
                 HStack {
+                    Text("Scale: ")
+                    Slider(value: $shader.scale, in: 0...1, step: 0.01)
+                }
+                
+                HStack {
                     Text("Intensity: ")
                     Slider(value: $shader.intensity, in: 0...1, step: 0.01)
                 }
@@ -151,7 +160,7 @@ struct SDFShaderAdjustmentView: View {
             }
             .padding(.horizontal)
         }
-        .frame(height: 370)
+        .frame(height: 425)
     }
 }
 
