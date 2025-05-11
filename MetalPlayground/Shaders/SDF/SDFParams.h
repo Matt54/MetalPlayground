@@ -14,4 +14,7 @@ struct SDFParams {
     float scale;
     float shellThickness;
     int shouldMakeAnnular;
+    float patternFrequency;
+    int shouldApplyPattern;
+    float patternPhase;
 };

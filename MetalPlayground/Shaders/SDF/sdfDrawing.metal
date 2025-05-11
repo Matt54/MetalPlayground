@@ -155,6 +155,11 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
         }
     }
     
+    // Apply pattern effect if enabled
+    if (params.shouldApplyPattern != 0) {
+        finalSDF = sin(params.patternFrequency * finalSDF + params.patternPhase) / params.patternFrequency;
+    }
+    
     // Apply final mask
     float mask = params.intensity - (params.shouldMask ? step(0.0, finalSDF) : finalSDF);
     

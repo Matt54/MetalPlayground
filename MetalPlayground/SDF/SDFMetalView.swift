@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum SDFShape: Int, CaseIterable {
+enum SDFShape: Int, CaseIterable, Codable {
     case circle = 0
     case box = 1
     case triangle = 2
@@ -45,7 +45,7 @@ enum SDFShape: Int, CaseIterable {
     }
 }
 
-struct SDFShader: IsComputeShaderDefinitionWithParameters {
+struct SDFShader: IsComputeShaderDefinitionWithParameters, Codable {
     var functionName: String = "sdfDrawing"
     var setByteLength: Int = MemoryLayout<SDFParams>.stride
     var shouldMask: Bool = false
@@ -60,6 +60,11 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
     var scale: Float = 0.5
     var shouldMakeAnnular: Bool = false
     var shellThickness: Float = 0.05
+    var shouldApplyPattern: Bool = false
+    var patternFrequency: Float = 5.0
+    var patternPhase: Float = 0
+    var isPatternAnimated: Bool = false
+    var patternAnimationSpeed: Float = 1.0
 
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T {
         var params = SDFParams(
@@ -72,7 +77,10 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
             blendK: blendK,
             scale: scale,
             shellThickness: shellThickness,
-            shouldMakeAnnular: shouldMakeAnnular ? 1 : 0
+            shouldMakeAnnular: shouldMakeAnnular ? 1 : 0,
+            patternFrequency: patternFrequency,
+            shouldApplyPattern: shouldApplyPattern ? 1 : 0,
+            patternPhase: patternPhase + (properties["autoPatternPhase"] as? Float ?? 0)
         )
         return withUnsafePointer(to: &params) {
             body(UnsafeRawPointer($0))
@@ -86,6 +94,15 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
                 properties["autoRotateAmount"] = autoRotateAmount
             } else {
                 properties["autoRotateAmount"] = rotationSpeed * Float(deltaTime)
+            }
+        }
+
+        if isPatternAnimated {
+            if var autoPatternPhase = properties["autoPatternPhase"] as? Float {
+                autoPatternPhase += Float(deltaTime) * patternAnimationSpeed
+                properties["autoPatternPhase"] = autoPatternPhase
+            } else {
+                properties["autoPatternPhase"] = patternAnimationSpeed * Float(deltaTime)
             }
         }
     }
@@ -124,7 +141,7 @@ struct SDFShaderAdjustmentView: View {
     
     private var repetitionsView: some View {
         HStack {
-            Text("Repetitions: ")
+            Text("Tile Repeats: ")
             Slider(value: $shader.repetitions, in: 1...20, step: 1)
             Text("\(Int(shader.repetitions))")
         }
@@ -172,6 +189,42 @@ struct SDFShaderAdjustmentView: View {
         .frame(minWidth: 300)
     }
     
+    private var applyPatternToggleView: some View {
+        Toggle("Pattern Repeats", isOn: $shader.shouldApplyPattern)
+            .frame(width: 200)
+    }
+    
+    private var patternFrequencyView: some View {
+        HStack {
+            Text("Pattern Frequency: ")
+            Slider(value: $shader.patternFrequency, in: 1...20, step: 0.5)
+            Text(String(format: "%.1f", shader.patternFrequency))
+        }
+        .frame(minWidth: 300)
+    }
+
+    private var patternAnimationToggleView: some View {
+        Toggle("Pattern Animation", isOn: $shader.isPatternAnimated)
+            .frame(width: 200)
+    }
+
+    private var patternAnimationSpeedView: some View {
+        HStack {
+            if shader.isPatternAnimated {
+                Text("Speed: ")
+                Slider(value: $shader.patternAnimationSpeed, in: 0...3, step: 0.025)
+                Text(String(format: "%.1f", shader.patternAnimationSpeed))
+            } else {
+                Text("Phase: ")
+                Slider(value: $shader.patternPhase,
+                       in: 0...(2 * Float.pi),  // Full 360 degree
+                       step: 0.01)
+                Text("\(Int(shader.patternPhase * 180 / Float.pi))°") // Show in degrees
+            }
+        }
+        .frame(minWidth: 300)
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -195,6 +248,22 @@ struct SDFShaderAdjustmentView: View {
                 HStack {
                     Text("Scale: ")
                     Slider(value: $shader.scale, in: 0...1, step: 0.01)
+                }
+                
+                ViewThatFits {
+                    HStack(spacing: 24) {
+                        annualRingToggleView
+                        Spacer()
+                        if shader.shouldMakeAnnular {
+                            shellThicknessView
+                        }
+                    }
+                    VStack(alignment: .leading, spacing: 24) {
+                        annualRingToggleView
+                        if shader.shouldMakeAnnular {
+                            shellThicknessView
+                        }
+                    }
                 }
                 
                 HStack {
@@ -221,22 +290,6 @@ struct SDFShaderAdjustmentView: View {
                     Slider(value: $shader.blendK, in: 0...1.0, step: 0.01)
                     Text(String(format: "%.2f", shader.blendK))
                 }
-                
-                ViewThatFits {
-                    HStack(spacing: 24) {
-                        annualRingToggleView
-                        Spacer()
-                        if shader.shouldMakeAnnular {
-                            shellThicknessView
-                        }
-                    }
-                    VStack(alignment: .leading, spacing: 24) {
-                        annualRingToggleView
-                        if shader.shouldMakeAnnular {
-                            shellThicknessView
-                        }
-                    }
-                }
 
                 ViewThatFits {
                     HStack(spacing: 24) {
@@ -248,6 +301,35 @@ struct SDFShaderAdjustmentView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         autoRotateToggleView
                         rotationView
+                    }
+                }
+                
+                ViewThatFits {
+                    HStack(spacing: 24) {
+                        applyPatternToggleView
+                        Spacer()
+                        if shader.shouldApplyPattern {
+                            patternFrequencyView
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 24) {
+                        applyPatternToggleView
+                        if shader.shouldApplyPattern {
+                            patternFrequencyView
+                        }
+                    }
+                }
+
+                ViewThatFits {
+                    HStack(spacing: 24) {
+                        patternAnimationToggleView
+                        Spacer()
+                        patternAnimationSpeedView
+                    }
+                    VStack(alignment: .leading, spacing: 24) {
+                        patternAnimationToggleView
+                        patternAnimationSpeedView
                     }
                 }
             }
