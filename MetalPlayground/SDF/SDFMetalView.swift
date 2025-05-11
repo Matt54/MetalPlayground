@@ -223,7 +223,6 @@ struct SDFShaderAdjustmentView: View {
                 }
                 
                 ViewThatFits {
-                    // Horizontal layout
                     HStack(spacing: 24) {
                         annualRingToggleView
                         Spacer()
@@ -231,7 +230,6 @@ struct SDFShaderAdjustmentView: View {
                             shellThicknessView
                         }
                     }
-                    // Vertical layout
                     VStack(alignment: .leading, spacing: 24) {
                         annualRingToggleView
                         if shader.shouldMakeAnnular {
