@@ -104,25 +104,91 @@ extension SDFShader: AdjustableComputeShaderDefinition {
 struct SDFShaderAdjustmentView: View {
     @Binding var shader: SDFShader
     
+    private var sdfFunctionPickerView: some View {
+        HStack {
+            Text("SDF Function")
+            Picker("", selection: $shader.selectedShape) {
+                ForEach(SDFShape.allCases, id: \.self) { shape in
+                    Text(shape.displayName).tag(shape)
+                }
+            }
+            .pickerStyle(.menu)
+            Spacer()
+        }
+    }
+
+    private var enableMaskingToggleView: some View {
+        Toggle("Enable Masking", isOn: $shader.shouldMask)
+            .frame(width: 200)
+    }
+    
+    private var repetitionsView: some View {
+        HStack {
+            Text("Repetitions: ")
+            Slider(value: $shader.repetitions, in: 1...20, step: 1)
+            Text("\(Int(shader.repetitions))")
+        }
+        .frame(minWidth: 300)
+    }
+    
+    private var flipAlternativeToggleView: some View {
+        Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
+            .frame(width: 175)
+    }
+    
+    private var annualRingToggleView: some View {
+        Toggle("Annular (Ring)", isOn: $shader.shouldMakeAnnular)
+            .frame(width: 175)
+    }
+    
+    private var shellThicknessView: some View {
+        HStack {
+            Text("Shell Thickness: ")
+            Slider(value: $shader.shellThickness, in: 0...1, step: 0.01)
+            Text(String(format: "%.2f", shader.shellThickness))
+        }
+        .frame(minWidth: 300)
+    }
+    
+    private var autoRotateToggleView: some View {
+        Toggle("Auto Rotate", isOn: $shader.isRotating)
+            .frame(width: 150)
+    }
+    
+    private var rotationView: some View {
+        HStack {
+            if shader.isRotating {
+                Text("Speed: ")
+                Slider(value: $shader.rotationSpeed, in: 0...3, step: 0.025)
+                Text(String(format: "%.1f", shader.rotationSpeed))
+            } else {
+                Text("Rotation: ")
+                Slider(value: $shader.rotation,
+                       in: 0...(2 * Float.pi),  // Full 360 degree rotation
+                       step: 0.01)
+                Text("\(Int(shader.rotation * 180 / Float.pi))°") // Show in degrees
+            }
+        }
+        .frame(minWidth: 300)
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                
-                HStack(spacing: 24) {
-                    HStack {
-                        Text("SDF Function")
-                        Picker("", selection: $shader.selectedShape) {
-                            ForEach(SDFShape.allCases, id: \.self) { shape in
-                                Text(shape.displayName).tag(shape)
-                            }
+                ViewThatFits {
+                    HStack(spacing: 24) {
+                        sdfFunctionPickerView
+                        HStack {
+                            Spacer()
+                            enableMaskingToggleView
                         }
-                        .pickerStyle(.menu)
-                        Spacer()
                     }
-                    HStack {
-                        Spacer()
-                        Toggle("Enable Masking", isOn: $shader.shouldMask)
-                            .frame(width: 200)
+                    VStack(alignment: .leading, spacing: 24) {
+                        sdfFunctionPickerView
+                        HStack {
+                            enableMaskingToggleView
+                            Spacer()
+                        }
                     }
                 }
                 
@@ -136,15 +202,18 @@ struct SDFShaderAdjustmentView: View {
                     Slider(value: $shader.intensity, in: 0...1, step: 0.01)
                 }
                 
-                HStack(spacing: 24) {
-                    HStack {
-                        Text("Repetitions: ")
-                        Slider(value: $shader.repetitions, in: 1...20, step: 1)
-                        Text("\(Int(shader.repetitions))")
+                ViewThatFits {
+                    HStack(spacing: 24) {
+                        repetitionsView
+                        flipAlternativeToggleView
                     }
-                    
-                    Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
-                        .frame(width: 175)
+                    VStack(alignment: .leading, spacing: 24) {
+                        repetitionsView
+                        HStack {
+                            flipAlternativeToggleView
+                            Spacer()
+                        }
+                    }
                 }
                 
                 HStack {
@@ -152,36 +221,35 @@ struct SDFShaderAdjustmentView: View {
                     Slider(value: $shader.blendK, in: 0...1.0, step: 0.01)
                     Text(String(format: "%.2f", shader.blendK))
                 }
-
-                HStack(spacing: 24) {
-                    Toggle("Make Annular (Ring)", isOn: $shader.shouldMakeAnnular)
-                        .frame(width: 225)
-                    Spacer()
-                    
-                    if shader.shouldMakeAnnular {
-                        HStack {
-                            Text("Shell Thickness: ")
-                            Slider(value: $shader.shellThickness, in: 0...1, step: 0.01)
-                            Text(String(format: "%.2f", shader.shellThickness))
+                
+                ViewThatFits {
+                    // Horizontal layout
+                    HStack(spacing: 24) {
+                        annualRingToggleView
+                        Spacer()
+                        if shader.shouldMakeAnnular {
+                            shellThicknessView
+                        }
+                    }
+                    // Vertical layout
+                    VStack(alignment: .leading, spacing: 24) {
+                        annualRingToggleView
+                        if shader.shouldMakeAnnular {
+                            shellThicknessView
                         }
                     }
                 }
 
-                HStack(spacing: 24) {
-                    Toggle("Auto Rotate", isOn: $shader.isRotating)
-                        .frame(width: 150)
-                    Spacer()
+                ViewThatFits {
+                    HStack(spacing: 24) {
+                        autoRotateToggleView
+                        Spacer()
+                        rotationView
+                    }
                     
-                    if shader.isRotating {
-                        Text("Speed: ")
-                        Slider(value: $shader.rotationSpeed, in: 0...3, step: 0.025)
-                        Text(String(format: "%.1f", shader.rotationSpeed))
-                    } else {
-                        Text("Rotation: ")
-                        Slider(value: $shader.rotation,
-                               in: 0...(2 * Float.pi),  // Full 360 degree rotation
-                               step: 0.01)
-                        Text("\(Int(shader.rotation * 180 / Float.pi))°") // Show in degrees
+                    VStack(alignment: .leading, spacing: 24) {
+                        autoRotateToggleView
+                        rotationView
                     }
                 }
             }
@@ -210,3 +278,4 @@ struct SDFMetalView: View {
 #Preview {
     SDFMetalView()
 }
+
