@@ -23,6 +23,15 @@ struct MainNavigationView: View {
                     }
                 }
                 
+                Section("SDF Drawing") {
+                    ForEach(NavigationRoute.sdfDrawingExamples) { route in
+                        NavigationLink(value: route) {
+                            Text(route.title)
+                                .tag(route)
+                        }
+                    }
+                }
+                
                 Section("Book of Shaders Examples") {
                     ForEach(NavigationRoute.bookOfShadersExamples) { route in
                         NavigationLink(value: route) {
@@ -52,6 +61,8 @@ struct MainNavigationView: View {
                     ColorGradientMetalView()
                 case .polarGradient:
                     PolarColorGradientView()
+                case .sdfDrawing:
+                    SDFMetalView()
                 }
             } else {
                 Text("Select an example")
@@ -69,6 +80,7 @@ struct MainNavigationView: View {
         case shapingFunctions
         case colorGradient
         case polarGradient
+        case sdfDrawing
         
         var title: String {
             switch self {
@@ -88,6 +100,8 @@ struct MainNavigationView: View {
                 "Color Gradient"
             case .polarGradient:
                 "Polar Gradient"
+            case .sdfDrawing:
+                "SDF Drawing"
             }
         }
         
@@ -96,6 +110,9 @@ struct MainNavigationView: View {
         static let simpleExamples: [NavigationRoute] = [
             .example1,
             .example2
+        ]
+        static let sdfDrawingExamples: [NavigationRoute] = [
+            .sdfDrawing
         ]
         static let bookOfShadersExamples: [NavigationRoute] = [
             .helloWorld,
