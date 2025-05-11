@@ -163,6 +163,10 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
     // Apply final mask
     float mask = params.intensity - (params.shouldMask ? step(0.0, finalSDF) : finalSDF);
     
-    float3 color = float3(mask);
+    // Apply contrast
+    float value = pow(mask, params.contrast);
+    
+    float3 color = float3(value);
+    
     destination.write(half4(half3(color), 1.0), pixelCoord);
 }

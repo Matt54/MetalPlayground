@@ -17,4 +17,5 @@ struct SDFParams {
     float patternFrequency;
     int shouldApplyPattern;
     float patternPhase;
+    float contrast;
 };

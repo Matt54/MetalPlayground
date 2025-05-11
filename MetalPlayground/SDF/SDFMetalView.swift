@@ -65,6 +65,7 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters, Codable {
     var patternPhase: Float = 0
     var isPatternAnimated: Bool = false
     var patternAnimationSpeed: Float = 1.0
+    var contrast: Float = 1.0
 
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T {
         var params = SDFParams(
@@ -80,7 +81,8 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters, Codable {
             shouldMakeAnnular: shouldMakeAnnular ? 1 : 0,
             patternFrequency: patternFrequency,
             shouldApplyPattern: shouldApplyPattern ? 1 : 0,
-            patternPhase: patternPhase + (properties["autoPatternPhase"] as? Float ?? 0)
+            patternPhase: patternPhase + (properties["autoPatternPhase"] as? Float ?? 0),
+            contrast: contrast
         )
         return withUnsafePointer(to: &params) {
             body(UnsafeRawPointer($0))
@@ -120,7 +122,11 @@ extension SDFShader: AdjustableComputeShaderDefinition {
 
 struct SDFShaderAdjustmentView: View {
     @Binding var shader: SDFShader
-    
+    @State private var showingSaveDialog = false
+    @State private var newPresetName = ""
+    @State private var savedPresets: [String: SDFShader] = [:]
+    @State private var currentPresetName: String = "Default"
+
     private var sdfFunctionPickerView: some View {
         HStack {
             Text("SDF Function")
@@ -228,6 +234,33 @@ struct SDFShaderAdjustmentView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                HStack(spacing: 16) {
+                    Spacer()
+                    Menu {
+                        ForEach(Array(savedPresets.keys), id: \.self) { presetName in
+                            Button(presetName) {
+                                shader = savedPresets[presetName]!
+                                currentPresetName = presetName
+                            }
+                        }
+                    } label: {
+                        Label(currentPresetName, systemImage: "folder")
+                            .frame(width: 120)
+                    }
+                    .disabled(savedPresets.isEmpty)
+                    
+                    Spacer()
+                    
+                    Button {
+                        showingSaveDialog = true
+                    } label: {
+                        Label("Save Preset", systemImage: "square.and.arrow.down")
+                            .frame(width: 120)
+                    }
+                    Spacer()
+                }
+                    .padding(.vertical, 8)
+                
                 ViewThatFits {
                     HStack(spacing: 24) {
                         sdfFunctionPickerView
@@ -248,6 +281,7 @@ struct SDFShaderAdjustmentView: View {
                 HStack {
                     Text("Scale: ")
                     Slider(value: $shader.scale, in: 0...1, step: 0.01)
+                    Text(String(format: "%.2f", shader.scale))
                 }
                 
                 ViewThatFits {
@@ -269,6 +303,13 @@ struct SDFShaderAdjustmentView: View {
                 HStack {
                     Text("Intensity: ")
                     Slider(value: $shader.intensity, in: 0...1, step: 0.01)
+                    Text(String(format: "%.2f", shader.intensity))
+                }
+
+                HStack {
+                    Text("Contrast: ")
+                    Slider(value: $shader.contrast, in: 0...10, step: 0.01)
+                    Text(String(format: "%.2f", shader.contrast))
                 }
                 
                 ViewThatFits {
@@ -336,6 +377,37 @@ struct SDFShaderAdjustmentView: View {
             .padding(.horizontal)
         }
         .frame(height: 425)
+        .alert("Save Preset", isPresented: $showingSaveDialog) {
+            TextField("Preset Name", text: $newPresetName)
+            Button("Save") {
+                if !newPresetName.isEmpty {
+                    savedPresets[newPresetName] = shader
+                    savePresets()
+                    newPresetName = ""
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                newPresetName = ""
+            }
+        } message: {
+            Text("Enter a name for your shader preset")
+        }
+        .onAppear {
+            loadPresets()
+        }
+    }
+    
+    private func savePresets() {
+        if let encoded = try? JSONEncoder().encode(savedPresets) {
+            UserDefaults.standard.set(encoded, forKey: "SDFShaderPresets")
+        }
+    }
+    
+    private func loadPresets() {
+        if let data = UserDefaults.standard.data(forKey: "SDFShaderPresets"),
+           let decoded = try? JSONDecoder().decode([String: SDFShader].self, from: data) {
+            savedPresets = decoded
+        }
     }
 }
 
