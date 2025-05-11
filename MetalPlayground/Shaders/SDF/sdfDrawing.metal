@@ -90,6 +90,10 @@ inline float getSDFValue(float2 centeredCoords, enum SDFPrimitive shape) {
     }
 }
 
+inline float opOnion(float sdf, float thickness) {
+    return abs(sdf) - thickness;
+}
+
 // Polynomial smooth minimum function for SDF blending
 // k controls the size of the blending region:
 // This preserves the distance field properties better than regular interpolation
@@ -116,6 +120,13 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
     coordinates = rotate2D(coordinates, params.rotation);
     float currentSDF = getSDFValue(coordinates, params.shape);
     
+    
+    // Scale the thickness to a reasonable range for the SDF
+    float scaledThickness = params.shellThickness * 0.125;
+    if (params.shouldMakeAnnular) {
+        currentSDF = opOnion(currentSDF, scaledThickness);
+    }
+    
     float finalSDF = currentSDF;
     
     // Blend with neighboring tiles if blending is enabled
@@ -131,6 +142,12 @@ kernel void sdfDrawing(texture2d<half, access::write> destination [[texture(0)]]
                 float2 neighborLocal = coordinates - float2(dx, dy) * scaleFactor;
                 float2 neighborRotated = rotate2D(neighborLocal, params.rotation);
                 float neighborSDF = getSDFValue(neighborRotated, params.shape);
+                
+                // Apply onion operation to neighbor if enabled
+                // not sure if this does anything
+                if (params.shouldMakeAnnular) {
+                    neighborSDF = opOnion(neighborSDF, scaledThickness);
+                }
                 
                 // Blend the neighbor's SDF with our current result
                 finalSDF = smoothMin(finalSDF, neighborSDF, params.blendK);

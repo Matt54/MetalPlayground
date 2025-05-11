@@ -58,6 +58,8 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
     var isRotating: Bool = false
     var rotationSpeed: Float = 1.0
     var scale: Float = 0.5
+    var shouldMakeAnnular: Bool = false
+    var shellThickness: Float = 0.05
 
     func withParameters<T>(_ properties: [String: Any], _ body: (UnsafeRawPointer) -> T) -> T {
         var params = SDFParams(
@@ -69,6 +71,8 @@ struct SDFShader: IsComputeShaderDefinitionWithParameters {
             rotation: rotation + (properties["autoRotateAmount"] as? Float ?? 0),
             blendK: blendK,
             scale: scale,
+            shellThickness: shellThickness,
+            shouldMakeAnnular: shouldMakeAnnular ? 1 : 0
         )
         return withUnsafePointer(to: &params) {
             body(UnsafeRawPointer($0))
@@ -103,18 +107,24 @@ struct SDFShaderAdjustmentView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                HStack {
-                    Text("SDF Function")
-                    Spacer()
-                    Picker("", selection: $shader.selectedShape) {
-                        ForEach(SDFShape.allCases, id: \.self) { shape in
-                            Text(shape.displayName).tag(shape)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
                 
-                Toggle("Enable Masking", isOn: $shader.shouldMask)
+                HStack(spacing: 24) {
+                    HStack {
+                        Text("SDF Function")
+                        Picker("", selection: $shader.selectedShape) {
+                            ForEach(SDFShape.allCases, id: \.self) { shape in
+                                Text(shape.displayName).tag(shape)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        Spacer()
+                    }
+                    HStack {
+                        Spacer()
+                        Toggle("Enable Masking", isOn: $shader.shouldMask)
+                            .frame(width: 200)
+                    }
+                }
                 
                 HStack {
                     Text("Scale: ")
@@ -126,18 +136,35 @@ struct SDFShaderAdjustmentView: View {
                     Slider(value: $shader.intensity, in: 0...1, step: 0.01)
                 }
                 
-                Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
-                
-                HStack {
-                    Text("Repetitions: ")
-                    Slider(value: $shader.repetitions, in: 1...20, step: 1)
-                    Text("\(Int(shader.repetitions))")
+                HStack(spacing: 24) {
+                    HStack {
+                        Text("Repetitions: ")
+                        Slider(value: $shader.repetitions, in: 1...20, step: 1)
+                        Text("\(Int(shader.repetitions))")
+                    }
+                    
+                    Toggle("Flip Alternating", isOn: $shader.shouldFlipAlternating)
+                        .frame(width: 175)
                 }
                 
                 HStack {
                     Text("Blend Amount: ")
                     Slider(value: $shader.blendK, in: 0...1.0, step: 0.01)
                     Text(String(format: "%.2f", shader.blendK))
+                }
+
+                HStack(spacing: 24) {
+                    Toggle("Make Annular (Ring)", isOn: $shader.shouldMakeAnnular)
+                        .frame(width: 225)
+                    Spacer()
+                    
+                    if shader.shouldMakeAnnular {
+                        HStack {
+                            Text("Shell Thickness: ")
+                            Slider(value: $shader.shellThickness, in: 0...1, step: 0.01)
+                            Text(String(format: "%.2f", shader.shellThickness))
+                        }
+                    }
                 }
 
                 HStack(spacing: 24) {

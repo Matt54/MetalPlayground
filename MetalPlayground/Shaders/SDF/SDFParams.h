@@ -12,4 +12,6 @@ struct SDFParams {
     float rotation;
     float blendK;
     float scale;
+    float shellThickness;
+    int shouldMakeAnnular;
 };
